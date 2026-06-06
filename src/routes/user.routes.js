@@ -5,19 +5,16 @@ class UserRoutes {
         this.router = express.Router();
         this.userController = userController;
 
-        // Tambahkan console.log untuk debug (opsional)
 
         this.initializeRoutes();
     }
 
     initializeRoutes() {
-        // Cek apakah userController ada
         if (!this.userController) {
-            console.error('❌ userController is undefined!');
+            console.error(' userController is undefined!');
             return;
         }
 
-        // Public routes (untuk development)
         this.router.get('/', this.userController.getAllUsers.bind(this.userController));
         this.router.get('/:id', this.userController.getUserById.bind(this.userController));
 

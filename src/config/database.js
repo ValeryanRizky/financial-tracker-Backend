@@ -8,10 +8,10 @@ class Database {
     async connect(uri) {
         try {
             this.connection = await mongoose.connect(uri);
-            console.log('✅ Database connected');
+            console.log(' Database connected');
             return this.connection;
         } catch (error) {
-            console.error('❌ Database connection error:', error);
+            console.error('Database connection error:', error);
             process.exit(1);
         }
     }

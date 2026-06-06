@@ -1,11 +1,6 @@
 const User = require('../models/User');
 const IRepository = require('../interfaces/repository.interface');
 
-/**
- * User Repository
- * (Single Responsibility - hanya akses database)
- * (Open/Closed - bisa di-extend tanpa modifikasi)
- */
 class UserRepository extends IRepository {
     constructor() {
         super();
@@ -28,7 +23,7 @@ class UserRepository extends IRepository {
         return this.model.findByIdAndUpdate(
             id,
             data,
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         ).select('-password');
     }
 
@@ -36,7 +31,6 @@ class UserRepository extends IRepository {
         return this.model.findByIdAndDelete(id);
     }
 
-    // Method spesifik untuk user
     async findByEmail(email) {
         return this.model.findOne({ email: email.toLowerCase() });
     }

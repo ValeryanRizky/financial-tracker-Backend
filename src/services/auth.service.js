@@ -2,11 +2,6 @@ const PasswordUtil = require('../utils/password.util');
 const TokenUtil = require('../utils/token.util');
 const AuthDTO = require('../dtos/auth.dto');
 
-/**
- * Auth Service - Business Logic
- * (Single Responsibility - logika bisnis auth)
- * (Dependency Inversion - tergantung interface, bukan konkrit)
- */
 class AuthService {
     constructor(userRepository, balanceRepository) {
         this.userRepository = userRepository;
@@ -15,7 +10,6 @@ class AuthService {
 
     async register(userData) {
         try {
-            // Validasi input
             const validatedData = AuthDTO.registerRequest(userData);
 
             if (!validatedData.email || !validatedData.password || !validatedData.name) {
@@ -26,7 +20,6 @@ class AuthService {
                 };
             }
 
-            // Validasi password
             const passwordValidation = PasswordUtil.validate(validatedData.password);
             if (!passwordValidation.isValid) {
                 return {
@@ -36,7 +29,6 @@ class AuthService {
                 };
             }
 
-            // Cek user sudah ada
             const existingUser = await this.userRepository.findByEmail(validatedData.email);
             if (existingUser) {
                 return {
@@ -46,23 +38,19 @@ class AuthService {
                 };
             }
 
-            // Hash password
             const hashedPassword = await PasswordUtil.hash(validatedData.password);
 
-            // Buat user
             const newUser = await this.userRepository.create({
                 email: validatedData.email,
                 password: hashedPassword,
                 name: validatedData.name
             });
 
-            // Buat balance untuk user
             await this.balanceRepository.create({
                 userId: newUser._id,
                 amount: 0
             });
 
-            // Generate token
             const token = TokenUtil.generate({ userId: newUser._id });
 
             return {
@@ -82,7 +70,6 @@ class AuthService {
 
     async login(credentials) {
         try {
-            // Validasi input
             const validatedData = AuthDTO.loginRequest(credentials);
 
             if (!validatedData.email || !validatedData.password) {
@@ -93,7 +80,6 @@ class AuthService {
                 };
             }
 
-            // Cari user
             const user = await this.userRepository.findByEmail(validatedData.email);
             if (!user) {
                 return {
@@ -103,7 +89,6 @@ class AuthService {
                 };
             }
 
-            // Cek password
             const isPasswordValid = await PasswordUtil.compare(
                 validatedData.password,
                 user.password
@@ -117,7 +102,6 @@ class AuthService {
                 };
             }
 
-            // Generate token
             const token = TokenUtil.generate({ userId: user._id });
 
             return {

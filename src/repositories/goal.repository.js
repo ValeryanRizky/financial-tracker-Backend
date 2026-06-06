@@ -36,7 +36,7 @@ class GoalRepository extends IRepository {
             return this.model.findByIdAndUpdate(
                 id,
                 data,
-                { new: true, runValidators: true }
+                { returnDocument: 'after', runValidators: true } 
             );
         } catch (error) {
             throw new Error(`Error updating goal: ${error.message}`);
@@ -51,7 +51,6 @@ class GoalRepository extends IRepository {
         }
     }
 
-    // Get all goals by user ID
     async findByUserId(userId, filters = {}) {
         try {
             const query = { userId };
@@ -73,7 +72,6 @@ class GoalRepository extends IRepository {
         }
     }
 
-    // Get goal statistics
     async getStats(userId) {
         try {
             const goals = await this.model.find({ userId });

@@ -9,10 +9,8 @@ class GoalRoutes {
     }
 
     initializeRoutes() {
-        // Semua route goal butuh authentication
         this.router.use(this.authMiddleware.verifyToken);
 
-        // CRUD routes
         this.router.post('/', this.goalController.createGoal);
         this.router.get('/', this.goalController.getUserGoals);
         this.router.get('/stats', this.goalController.getGoalStats);

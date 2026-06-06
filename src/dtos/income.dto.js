@@ -6,7 +6,8 @@ class IncomeDTO {
             category: data.category,
             description: data.description || '',
             date: data.date ? new Date(data.date) : new Date(),
-            userId: data.userId
+            userId: data.userId,
+            walletId: data.walletId || null
         };
     }
 
@@ -18,6 +19,7 @@ class IncomeDTO {
             category: income.category,
             description: income.description,
             date: income.date,
+            walletId: income.walletId || null,
             createdAt: income.createdAt,
             updatedAt: income.updatedAt
         };
@@ -34,6 +36,19 @@ class IncomeDTO {
         if (totalAmount !== null) response.totalAmount = totalAmount;
 
         return response;
+    }
+
+    static updateRequest(data) {
+        const updateData = {};
+
+        if (data.amount !== undefined) updateData.amount = data.amount;
+        if (data.paymentMethod !== undefined) updateData.paymentMethod = data.paymentMethod;
+        if (data.category !== undefined) updateData.category = data.category;
+        if (data.description !== undefined) updateData.description = data.description;
+        if (data.date !== undefined) updateData.date = data.date;
+        if (data.walletId !== undefined) updateData.walletId = data.walletId;
+
+        return updateData;
     }
 }
 

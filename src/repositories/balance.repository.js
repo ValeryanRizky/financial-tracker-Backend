@@ -20,14 +20,13 @@ class BalanceRepository extends IRepository {
     }
 
     async update(id, data) {
-        return this.model.findByIdAndUpdate(id, data, { new: true });
+        return this.model.findByIdAndUpdate(id, data, { returnDocument: 'after' });
     }
 
     async delete(id) {
         return this.model.findByIdAndDelete(id);
     }
 
-    // 🔥 METHOD PENTING UNTUK BALANCE
     async findByUserId(userId) {
         try {
             return this.model.findOne({ userId });
@@ -36,13 +35,12 @@ class BalanceRepository extends IRepository {
         }
     }
 
-    // 🔥 METHOD UNTUK UPDATE ATAU CREATE BALANCE
     async updateByUserId(userId, amount) {
         try {
             return this.model.findOneAndUpdate(
                 { userId },
                 { amount },
-                { new: true, upsert: true, runValidators: true }
+                { returnDocument: 'after', upsert: true, runValidators: true }
             );
         } catch (error) {
             throw new Error(`Error updating balance: ${error.message}`);

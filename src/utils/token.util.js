@@ -1,9 +1,5 @@
 const jwt = require('jsonwebtoken');
 
-/**
- * Utility untuk handle JWT
- * (Single Responsibility - hanya urusan token)
- */
 class TokenUtil {
     static generate(payload, expiresIn = '7d') {
         return jwt.sign(

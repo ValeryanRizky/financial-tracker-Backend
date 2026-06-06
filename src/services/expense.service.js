@@ -1,26 +1,23 @@
 const ExpenseDTO = require('../dtos/expense.dto');
 
 class ExpenseService {
-    constructor(expenseRepository, balanceRepository = null) {
+    constructor(expenseRepository, balanceRepository = null, walletRepository = null) { // <-- TAMBAHKAN walletRepository
         this.expenseRepository = expenseRepository;
         this.balanceRepository = balanceRepository;
+        this.walletRepository = walletRepository; // <-- TAMBAHKAN
     }
 
-    // ============= VALIDATION METHODS =============
     _validateCategory(category) {
         const validCategories = ['Food', 'Transport', 'Bills', 'Shopping', 'Health', 'Other'];
         return validCategories.includes(category);
     }
 
     _validatePaymentMethod(method) {
-        const validMethods = ['Cash', 'Bank Transfer', 'E-Wallet', 'Credit Card', 'Debit Card', 'Other'];
-        return validMethods.includes(method);
+        return method && typeof method === 'string' && method.trim().length > 0;
     }
 
-    // ============= CREATE EXPENSE =============
     async createExpense(userId, expenseData) {
         try {
-            // Validasi amount
             if (!expenseData.amount || expenseData.amount <= 0) {
                 return {
                     success: false,
@@ -29,7 +26,6 @@ class ExpenseService {
                 };
             }
 
-            // Validasi payment method
             if (!expenseData.paymentMethod) {
                 return {
                     success: false,
@@ -41,12 +37,11 @@ class ExpenseService {
             if (!this._validatePaymentMethod(expenseData.paymentMethod)) {
                 return {
                     success: false,
-                    message: 'Invalid payment method. Must be: Cash, Bank Transfer, E-Wallet, Credit Card, Debit Card, or Other',
+                    message: 'Payment method must be a valid string',
                     statusCode: 400
                 };
             }
 
-            // Validasi category
             if (!expenseData.category) {
                 return {
                     success: false,
@@ -63,27 +58,48 @@ class ExpenseService {
                 };
             }
 
-            // Siapkan data
             const createData = ExpenseDTO.createRequest({
                 ...expenseData,
                 userId
             });
 
-            // Simpan ke database
+            console.log('📝 Creating expense with data:', createData);
+
             const expense = await this.expenseRepository.create(createData);
 
-            // Update balance (kurangi saldo) jika ada balanceRepository
-            if (this.balanceRepository) {
+            let walletUpdated = false;
+
+            if (expenseData.walletId && this.walletRepository) {
+                try {
+                    const wallet = await this.walletRepository.findById(expenseData.walletId);
+                    if (wallet && wallet.userId.toString() === userId) {
+                        const oldBalance = wallet.balance || 0;
+                        const newBalance = Math.max(0, oldBalance - expenseData.amount);
+                        await this.walletRepository.updateBalance(expenseData.walletId, newBalance);
+                        walletUpdated = true;
+                        console.log(`✅ Wallet ${wallet.name} updated: ${oldBalance} - ${expenseData.amount} = ${newBalance}`);
+                    } else {
+                        console.warn(`⚠️ Wallet not found or not owned by user: ${expenseData.walletId}`);
+                    }
+                } catch (walletError) {
+                    console.error('Error updating wallet:', walletError);
+                }
+            } else {
+                console.log('ℹ️ No walletId provided, skipping wallet update');
+            }
+
+            if (!walletUpdated && this.balanceRepository) {
                 const balance = await this.balanceRepository.findByUserId(userId);
                 if (balance) {
                     const newAmount = Math.max(0, balance.amount - expenseData.amount);
                     await this.balanceRepository.updateByUserId(userId, newAmount);
+                    console.log(`✅ Legacy balance updated: -${expenseData.amount} → ${newAmount}`);
                 } else {
-                    // Buat balance baru jika belum ada (tapi expense harusnya balance sudah ada)
                     await this.balanceRepository.create({
                         userId: userId,
                         amount: 0
                     });
+                    console.log(`✅ Legacy balance created: 0`);
                 }
             }
 
@@ -102,12 +118,9 @@ class ExpenseService {
         }
     }
 
-    // ============= GET ALL EXPENSES =============
     async getUserExpenses(userId, filters = {}) {
         try {
             const result = await this.expenseRepository.findByUserId(userId, filters);
-
-            // Hitung total keseluruhan
             const totalAmount = await this.expenseRepository.getTotalByUserId(userId, filters);
 
             return {
@@ -131,7 +144,6 @@ class ExpenseService {
         }
     }
 
-    // ============= GET EXPENSE BY ID =============
     async getExpenseById(userId, expenseId) {
         try {
             const expense = await this.expenseRepository.findOne({
@@ -162,7 +174,6 @@ class ExpenseService {
         }
     }
 
-    // ============= UPDATE EXPENSE =============
     async updateExpense(userId, expenseId, updateData) {
         try {
             // Cek apakah expense ada
@@ -179,7 +190,6 @@ class ExpenseService {
                 };
             }
 
-            // Validasi amount jika ada
             if (updateData.amount !== undefined && updateData.amount <= 0) {
                 return {
                     success: false,
@@ -188,7 +198,6 @@ class ExpenseService {
                 };
             }
 
-            // Validasi category jika ada
             if (updateData.category && !this._validateCategory(updateData.category)) {
                 return {
                     success: false,
@@ -197,27 +206,44 @@ class ExpenseService {
                 };
             }
 
-            // Validasi payment method jika ada
             if (updateData.paymentMethod && !this._validatePaymentMethod(updateData.paymentMethod)) {
                 return {
                     success: false,
-                    message: 'Invalid payment method',
+                    message: 'Payment method must be a valid string',
                     statusCode: 400
                 };
             }
 
+            const amountDifference = updateData.amount !== undefined
+                ? updateData.amount - existingExpense.amount
+                : 0;
+
             const sanitizedData = ExpenseDTO.updateRequest(updateData);
 
-            // Update data
             const updatedExpense = await this.expenseRepository.update(expenseId, sanitizedData);
 
-            // Update balance jika amount berubah dan ada balanceRepository
-            if (this.balanceRepository && updateData.amount !== undefined) {
+            let walletUpdated = false;
+
+            if (amountDifference !== 0 && existingExpense.walletId && this.walletRepository) {
+                try {
+                    const wallet = await this.walletRepository.findById(existingExpense.walletId);
+                    if (wallet && wallet.userId.toString() === userId) {
+                        const newBalance = Math.max(0, (wallet.balance || 0) - amountDifference);
+                        await this.walletRepository.updateBalance(existingExpense.walletId, newBalance);
+                        walletUpdated = true;
+                        console.log(`✅ Wallet ${wallet.name} updated: ${amountDifference > 0 ? '-' : '+'}${Math.abs(amountDifference)} → ${newBalance}`);
+                    }
+                } catch (walletError) {
+                    console.error('Error updating wallet on update:', walletError);
+                }
+            }
+
+            if (!walletUpdated && amountDifference !== 0 && this.balanceRepository) {
                 const balance = await this.balanceRepository.findByUserId(userId);
                 if (balance) {
-                    const difference = updateData.amount - existingExpense.amount;
-                    const newAmount = Math.max(0, balance.amount - difference);
+                    const newAmount = Math.max(0, balance.amount - amountDifference);
                     await this.balanceRepository.updateByUserId(userId, newAmount);
+                    console.log(`✅ Legacy balance updated: ${amountDifference > 0 ? '-' : '+'}${Math.abs(amountDifference)} → ${newAmount}`);
                 }
             }
 
@@ -236,10 +262,8 @@ class ExpenseService {
         }
     }
 
-    // ============= DELETE EXPENSE =============
     async deleteExpense(userId, expenseId) {
         try {
-            // Cek apakah expense ada
             const existingExpense = await this.expenseRepository.findOne({
                 _id: expenseId,
                 userId
@@ -253,17 +277,32 @@ class ExpenseService {
                 };
             }
 
-            // Hapus
-            await this.expenseRepository.delete(expenseId);
+            let walletUpdated = false;
 
-            // Update balance (tambah saldo karena expense dihapus)
-            if (this.balanceRepository) {
+            if (existingExpense.walletId && this.walletRepository) {
+                try {
+                    const wallet = await this.walletRepository.findById(existingExpense.walletId);
+                    if (wallet && wallet.userId.toString() === userId) {
+                        const newBalance = (wallet.balance || 0) + existingExpense.amount;
+                        await this.walletRepository.updateBalance(existingExpense.walletId, newBalance);
+                        walletUpdated = true;
+                        console.log(`✅ Wallet ${wallet.name} updated: +${existingExpense.amount} → ${newBalance}`);
+                    }
+                } catch (walletError) {
+                    console.error('Error updating wallet on delete:', walletError);
+                }
+            }
+
+            if (!walletUpdated && this.balanceRepository) {
                 const balance = await this.balanceRepository.findByUserId(userId);
                 if (balance) {
                     const newAmount = balance.amount + existingExpense.amount;
                     await this.balanceRepository.updateByUserId(userId, newAmount);
+                    console.log(`✅ Legacy balance updated: +${existingExpense.amount} → ${newAmount}`);
                 }
             }
+
+            await this.expenseRepository.delete(expenseId);
 
             return {
                 success: true,
@@ -280,13 +319,11 @@ class ExpenseService {
         }
     }
 
-    // ============= GET CATEGORY SUMMARY =============
     async getCategorySummary(userId, startDate, endDate) {
         try {
             const summary = await this.expenseRepository.getCategorySummary(userId, startDate, endDate);
             const total = summary.reduce((sum, item) => sum + item.total, 0);
 
-            // Hitung persentase
             const categoriesWithPercentage = summary.map(item => ({
                 category: item._id,
                 total: item.total,
@@ -312,7 +349,6 @@ class ExpenseService {
         }
     }
 
-    // ============= GET MONTHLY SUMMARY =============
     async getMonthlySummary(userId, year, month) {
         try {
             const summary = await this.expenseRepository.getMonthlySummary(userId, year, month);
@@ -338,7 +374,6 @@ class ExpenseService {
         }
     }
 
-    // ============= GET DAILY SUMMARY =============
     async getDailySummary(userId, date) {
         try {
             const startDate = new Date(date);
@@ -375,7 +410,6 @@ class ExpenseService {
         }
     }
 
-    // ============= GET EXPENSE TRENDS =============
     async getExpenseTrends(userId, months = 6) {
         try {
             const trends = [];
@@ -412,13 +446,11 @@ class ExpenseService {
         }
     }
 
-    // ============= GET TOP EXPENSES =============
     async getTopExpenses(userId, limit = 5, startDate, endDate) {
         try {
             const filters = { startDate, endDate, limit };
             const result = await this.expenseRepository.findByUserId(userId, filters);
 
-            // Sort by amount descending
             const topExpenses = result.expenses
                 .sort((a, b) => b.amount - a.amount)
                 .slice(0, limit)

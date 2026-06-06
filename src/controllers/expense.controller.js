@@ -3,7 +3,6 @@ class ExpenseController {
         this.expenseService = expenseService;
     }
 
-    // Create expense
     createExpense = async (req, res) => {
         const result = await this.expenseService.createExpense(req.userId, req.body);
         return res.status(result.statusCode).json({
@@ -13,7 +12,6 @@ class ExpenseController {
         });
     };
 
-    // Get all expenses
     getUserExpenses = async (req, res) => {
         const filters = {
             category: req.query.category,
@@ -32,7 +30,6 @@ class ExpenseController {
         });
     };
 
-    // Get single expense
     getExpenseById = async (req, res) => {
         const result = await this.expenseService.getExpenseById(req.userId, req.params.id);
         return res.status(result.statusCode).json({
@@ -42,7 +39,6 @@ class ExpenseController {
         });
     };
 
-    // Update expense
     updateExpense = async (req, res) => {
         const result = await this.expenseService.updateExpense(req.userId, req.params.id, req.body);
         return res.status(result.statusCode).json({
@@ -52,7 +48,6 @@ class ExpenseController {
         });
     };
 
-    // Delete expense
     deleteExpense = async (req, res) => {
         const result = await this.expenseService.deleteExpense(req.userId, req.params.id);
         return res.status(result.statusCode).json({
@@ -61,7 +56,6 @@ class ExpenseController {
         });
     };
 
-    // Get category summary
     getCategorySummary = async (req, res) => {
         const { startDate, endDate } = req.query;
         const result = await this.expenseService.getCategorySummary(req.userId, startDate, endDate);
@@ -72,7 +66,6 @@ class ExpenseController {
         });
     };
 
-    // Get monthly summary
     getMonthlySummary = async (req, res) => {
         const { year, month } = req.params;
         const result = await this.expenseService.getMonthlySummary(req.userId, parseInt(year), parseInt(month));

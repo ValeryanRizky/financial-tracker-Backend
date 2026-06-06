@@ -3,7 +3,6 @@ class GoalController {
         this.goalService = goalService;
     }
 
-    // Create goal
     createGoal = async (req, res) => {
         const result = await this.goalService.createGoal(req.userId, req.body);
         return res.status(result.statusCode).json({
@@ -13,7 +12,6 @@ class GoalController {
         });
     };
 
-    // Get all goals
     getUserGoals = async (req, res) => {
         const filters = {
             category: req.query.category,
@@ -28,7 +26,6 @@ class GoalController {
         });
     };
 
-    // Get single goal
     getGoalById = async (req, res) => {
         const result = await this.goalService.getGoalById(req.userId, req.params.id);
         return res.status(result.statusCode).json({
@@ -38,7 +35,6 @@ class GoalController {
         });
     };
 
-    // Update goal
     updateGoal = async (req, res) => {
         const result = await this.goalService.updateGoal(req.userId, req.params.id, req.body);
         return res.status(result.statusCode).json({
@@ -48,7 +44,6 @@ class GoalController {
         });
     };
 
-    // Delete goal
     deleteGoal = async (req, res) => {
         const result = await this.goalService.deleteGoal(req.userId, req.params.id);
         return res.status(result.statusCode).json({
@@ -57,7 +52,6 @@ class GoalController {
         });
     };
 
-    // Add contribution
     addContribution = async (req, res) => {
         const { amount } = req.body;
         const result = await this.goalService.addContribution(req.userId, req.params.id, amount);
@@ -68,7 +62,6 @@ class GoalController {
         });
     };
 
-    // Get goal stats
     getGoalStats = async (req, res) => {
         const result = await this.goalService.getGoalStats(req.userId);
         return res.status(result.statusCode).json({

@@ -2,66 +2,61 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
-// Config
 dotenv.config();
 const database = require('./config/database');
 
-// ============= REPOSITORIES =============
 const UserRepository = require('./repositories/user.repository');
 const BalanceRepository = require('./repositories/balance.repository');
 const IncomeRepository = require('./repositories/income.repository');
 const ExpenseRepository = require('./repositories/expense.repository');
 const GoalRepository = require('./repositories/goal.repository');
+const WalletRepository = require('./repositories/wallet.repository');
 
-// ============= SERVICES =============
 const AuthService = require('./services/auth.service');
 const IncomeService = require('./services/income.service');
 const ExpenseService = require('./services/expense.service');
 const GoalService = require('./services/goal.service');
-const BalanceService = require('./services/balance.service'); // <-- TAMBAHKAN
+const BalanceService = require('./services/balance.service');
+const WalletService = require('./services/wallet.service');
 
-// ============= CONTROLLERS =============
 const AuthController = require('./controllers/auth.controller');
 const UserController = require('./controllers/user.controller');
 const IncomeController = require('./controllers/income.controller');
 const ExpenseController = require('./controllers/expense.controller');
 const GoalController = require('./controllers/goal.controller');
-const BalanceController = require('./controllers/balance.controller'); // <-- TAMBAHKAN
+const BalanceController = require('./controllers/balance.controller');
+const WalletController = require('./controllers/wallet.controller');
 
-// ============= MIDDLEWARES =============
 const AuthMiddleware = require('./middlewares/auth.middleware');
 
-// ============= ROUTES =============
 const AuthRoutes = require('./routes/auth.routes');
 const UserRoutes = require('./routes/user.routes');
 const IncomeRoutes = require('./routes/income.routes');
 const ExpenseRoutes = require('./routes/expense.routes');
 const GoalRoutes = require('./routes/goal.routes');
-const BalanceRoutes = require('./routes/balance.routes'); // <-- TAMBAHKAN
+const BalanceRoutes = require('./routes/balance.routes');
+const WalletRoutes = require('./routes/wallet.routes');
 
 class App {
     constructor() {
         this.app = express();
         this.port = process.env.PORT || 5000;
 
-        // Initialize dependencies
         this.initializeDependencies();
 
-        // Setup middleware and routes
         this.setupMiddleware();
         this.setupRoutes();
         this.setupErrorHandling();
     }
 
     initializeDependencies() {
-        // ============= REPOSITORIES =============
         this.userRepository = new UserRepository();
         this.balanceRepository = new BalanceRepository();
         this.incomeRepository = new IncomeRepository();
         this.expenseRepository = new ExpenseRepository();
         this.goalRepository = new GoalRepository();
+        this.walletRepository = new WalletRepository();
 
-        // ============= SERVICES =============
         this.authService = new AuthService(
             this.userRepository,
             this.balanceRepository
@@ -69,38 +64,43 @@ class App {
 
         this.incomeService = new IncomeService(
             this.incomeRepository,
-            this.balanceRepository
+            this.balanceRepository,
+            this.walletRepository  
         );
 
+        // 🔥 PERBAIKI: ExpenseService dengan walletRepository
         this.expenseService = new ExpenseService(
             this.expenseRepository,
-            this.balanceRepository
+            this.balanceRepository,
+            this.walletRepository  
         );
 
         this.goalService = new GoalService(
             this.goalRepository,
-            this.balanceRepository
+            this.balanceRepository,
+            this.walletRepository
         );
 
-        // 🔥 TAMBAH BALANCE SERVICE
         this.balanceService = new BalanceService(
             this.balanceRepository,
-            this.goalRepository, 
-            this.incomeRepository,    // <-- TAMBAHKAN
-            this.expenseRepository
+            this.goalRepository,
+            this.incomeRepository,
+            this.expenseRepository,
+            this.walletRepository 
         );
 
-        // ============= CONTROLLERS =============
+        this.walletService = new WalletService(
+            this.walletRepository
+        );
+
         this.authController = new AuthController(this.authService);
         this.userController = new UserController(this.userRepository);
         this.incomeController = new IncomeController(this.incomeService);
         this.expenseController = new ExpenseController(this.expenseService);
         this.goalController = new GoalController(this.goalService);
-
-        // 🔥 TAMBAH BALANCE CONTROLLER
         this.balanceController = new BalanceController(this.balanceService);
+        this.walletController = new WalletController(this.walletService);
 
-        // ============= MIDDLEWARES =============
         this.authMiddleware = new AuthMiddleware(this.userRepository);
     }
 
@@ -111,7 +111,6 @@ class App {
     }
 
     setupRoutes() {
-        // Health check
         this.app.get('/', (req, res) => {
             res.json({
                 success: true,
@@ -120,44 +119,44 @@ class App {
             });
         });
 
-        // ============= AUTH ROUTES =============
         const authRoutes = new AuthRoutes(
             this.authController,
             this.authMiddleware
         );
         this.app.use('/api/auth', authRoutes.getRouter());
 
-        // ============= USER ROUTES =============
         const userRoutes = new UserRoutes(this.userController);
         this.app.use('/api/users', userRoutes.getRouter());
 
-        // ============= INCOME ROUTES =============
         const incomeRoutes = new IncomeRoutes(
             this.incomeController,
             this.authMiddleware
         );
         this.app.use('/api/incomes', incomeRoutes.getRouter());
 
-        // ============= EXPENSE ROUTES =============
         const expenseRoutes = new ExpenseRoutes(
             this.expenseController,
             this.authMiddleware
         );
         this.app.use('/api/expenses', expenseRoutes.getRouter());
 
-        // ============= GOAL ROUTES =============
         const goalRoutes = new GoalRoutes(
             this.goalController,
             this.authMiddleware
         );
         this.app.use('/api/goals', goalRoutes.getRouter());
 
-        // ============= BALANCE ROUTES =============
         const balanceRoutes = new BalanceRoutes(
             this.balanceController,
             this.authMiddleware
         );
-        this.app.use('/api/balance', balanceRoutes.getRouter()); // <-- TAMBAHKAN
+        this.app.use('/api/balance', balanceRoutes.getRouter());
+
+        const walletRoutes = new WalletRoutes(
+            this.walletController,
+            this.authMiddleware
+        );
+        this.app.use('/api/wallets', walletRoutes.getRouter());
     }
 
     setupErrorHandling() {
@@ -169,7 +168,6 @@ class App {
             });
         });
 
-        // Error handler
         this.app.use((err, req, res, next) => {
             console.error('Error:', err.stack);
             res.status(500).json({
@@ -180,10 +178,8 @@ class App {
     }
 
     async start() {
-        // Connect to database
         await database.connect(process.env.MONGODB_URI);
 
-        // Start server
         this.app.listen(this.port, () => {
             console.log(`🚀 Server running on port ${this.port}`);
             console.log(`📝 Available endpoints:`);
@@ -192,11 +188,11 @@ class App {
             console.log(`   - Incomes:  /api/incomes`);
             console.log(`   - Expenses: /api/expenses`);
             console.log(`   - Goals:    /api/goals`);
-            console.log(`   - Balance:  /api/balance`); // <-- TAMBAHKAN
+            console.log(`   - Balance:  /api/balance`);
+            console.log(`   - Wallets:  /api/wallets`);
         });
     }
 }
 
-// Start the application
 const app = new App();
 app.start();

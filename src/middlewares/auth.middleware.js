@@ -1,9 +1,5 @@
 const TokenUtil = require('../utils/token.util');
 
-/**
- * Auth Middleware
- * (Single Responsibility - validasi token)
- */
 class AuthMiddleware {
     constructor(userRepository) {
         this.userRepository = userRepository;
@@ -29,7 +25,6 @@ class AuthMiddleware {
                 });
             }
 
-            // Cek user masih ada di database
             const user = await this.userRepository.findById(verification.decoded.userId);
 
             if (!user) {

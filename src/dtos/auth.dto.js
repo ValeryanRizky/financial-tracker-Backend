@@ -1,9 +1,5 @@
-/**
- * DTO untuk Request/Response
- * (Single Responsibility - handle data formatting)
- */
+
 class AuthDTO {
-    // Register Request
     static registerRequest(data) {
         return {
             email: data.email?.toLowerCase().trim(),

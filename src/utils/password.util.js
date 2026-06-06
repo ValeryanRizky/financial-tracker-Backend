@@ -1,9 +1,5 @@
 const bcrypt = require('bcryptjs');
 
-/**
- * Utility untuk handle password
- * (Single Responsibility - hanya urusan password)
- */
 class PasswordUtil {
     static async hash(password) {
         const salt = await bcrypt.genSalt(10);
@@ -15,7 +11,6 @@ class PasswordUtil {
     }
 
     static validate(password) {
-        // Minimal 6 karakter
         if (password.length < 6) {
             return {
                 isValid: false,

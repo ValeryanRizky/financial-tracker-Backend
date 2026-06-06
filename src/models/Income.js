@@ -8,13 +8,12 @@ const incomeSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        required: true,
-        enum: ['Cash', 'Bank Transfer', 'E-Wallet', 'Credit Card', 'Debit Card', 'Other'] // <-- SESUAIKAN
+        required: true
     },
     category: {
         type: String,
         required: true,
-        enum: ['Salary', 'Freelance', 'Investment', 'Gift', 'Other'] // <-- SESUAIKAN
+        enum: ['Salary', 'Freelance', 'Investment', 'Gift', 'Other']
     },
     description: {
         type: String,
@@ -29,6 +28,11 @@ const incomeSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
+    },
+    walletId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Wallet',
+        required: false
     }
 }, {
     timestamps: true,
@@ -39,5 +43,9 @@ const incomeSchema = new mongoose.Schema({
         }
     }
 });
+
+incomeSchema.index({ userId: 1, date: -1 });
+incomeSchema.index({ userId: 1, walletId: 1 });
+incomeSchema.index({ userId: 1, category: 1 });
 
 module.exports = mongoose.model('Income', incomeSchema);

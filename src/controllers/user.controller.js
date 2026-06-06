@@ -3,7 +3,6 @@ class UserController {
         this.userRepository = userRepository;
     }
 
-    // Get all users
     getAllUsers = async (req, res) => {
         try {
             const users = await this.userRepository.getAllUsers();
@@ -21,7 +20,6 @@ class UserController {
         }
     };
 
-    // Get user by ID
     getUserById = async (req, res) => {
         try {
             const user = await this.userRepository.findById(req.params.id);

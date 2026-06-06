@@ -36,7 +36,7 @@ class ExpenseRepository extends IRepository {
             return this.model.findByIdAndUpdate(
                 id,
                 data,
-                { new: true, runValidators: true }
+                { returnDocument: 'after', runValidators: true }  
             );
         } catch (error) {
             throw new Error(`Error updating expense: ${error.message}`);
@@ -51,7 +51,6 @@ class ExpenseRepository extends IRepository {
         }
     }
 
-    // Find by user ID with filters
     async findByUserId(userId, filters = {}) {
         try {
             const query = { userId };
@@ -61,12 +60,10 @@ class ExpenseRepository extends IRepository {
                 query.category = filters.category;
             }
 
-            // Filter by payment method
             if (filters.paymentMethod) {
                 query.paymentMethod = filters.paymentMethod;
             }
 
-            // Filter by date range
             if (filters.startDate || filters.endDate) {
                 query.date = {};
                 if (filters.startDate) {
@@ -77,7 +74,6 @@ class ExpenseRepository extends IRepository {
                 }
             }
 
-            // Pagination
             const page = filters.page || 1;
             const limit = filters.limit || 10;
             const skip = (page - 1) * limit;
@@ -101,7 +97,6 @@ class ExpenseRepository extends IRepository {
         }
     }
 
-    // Get total amount by user ID
     async getTotalByUserId(userId, filters = {}) {
         try {
             const query = { userId };
@@ -127,7 +122,6 @@ class ExpenseRepository extends IRepository {
         }
     }
 
-    // Get summary by category
     async getCategorySummary(userId, startDate, endDate) {
         try {
             const query = { userId };

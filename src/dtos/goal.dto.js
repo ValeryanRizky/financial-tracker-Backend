@@ -1,5 +1,4 @@
 class GoalDTO {
-    // Untuk request create goal
     static createRequest(data) {
         return {
             title: data.title,
@@ -13,7 +12,6 @@ class GoalDTO {
         };
     }
 
-    // Untuk update request
     static updateRequest(data) {
         const updateData = {};
         if (data.title) updateData.title = data.title;
@@ -26,7 +24,6 @@ class GoalDTO {
         return updateData;
     }
 
-    // Untuk response
     static response(goal) {
         const progress = (goal.currentAmount / goal.targetAmount) * 100;
         const remaining = goal.targetAmount - goal.currentAmount;
@@ -48,7 +45,6 @@ class GoalDTO {
         };
     }
 
-    // Untuk response list
     static listResponse(goals, total = null) {
         const response = {
             success: true,

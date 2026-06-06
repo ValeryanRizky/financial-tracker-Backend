@@ -9,10 +9,8 @@ class ExpenseRoutes {
     }
 
     initializeRoutes() {
-        // Semua route expense butuh authentication
         this.router.use(this.authMiddleware.verifyToken);
 
-        // CRUD routes
         this.router.post('/', this.expenseController.createExpense);
         this.router.get('/', this.expenseController.getUserExpenses);
         this.router.get('/summary/category', this.expenseController.getCategorySummary);

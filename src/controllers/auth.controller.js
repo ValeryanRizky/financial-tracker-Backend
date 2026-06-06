@@ -1,15 +1,10 @@
 const AuthDTO = require('../dtos/auth.dto');
 
-/**
- * Auth Controller - Handle HTTP Request/Response
- * (Single Responsibility - hanya handle HTTP)
- */
 class AuthController {
     constructor(authService) {
         this.authService = authService;
     }
 
-    // Dependency Injection via constructor
     register = async (req, res) => {
         const result = await this.authService.register(req.body);
 

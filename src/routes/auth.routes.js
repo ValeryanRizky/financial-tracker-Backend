@@ -1,9 +1,5 @@
 const express = require('express');
 
-/**
- * Auth Routes
- * (Single Responsibility - define endpoints)
- */
 class AuthRoutes {
     constructor(authController, authMiddleware) {
         this.router = express.Router();
@@ -13,11 +9,9 @@ class AuthRoutes {
     }
 
     initializeRoutes() {
-        // Public routes
         this.router.post('/register', this.authController.register);
         this.router.post('/login', this.authController.login);
 
-        // Protected routes
         this.router.get(
             '/me',
             this.authMiddleware.verifyToken,

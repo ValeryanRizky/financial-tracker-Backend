@@ -9,7 +9,7 @@ const goalSchema = new mongoose.Schema({
     category: {
         type: String,
         required: true,
-        enum: ['Tech', 'Travel', 'Finance', 'Education', 'Health', 'Other']
+        enum: ['Tech', 'Travel', 'Finance', 'Education', 'Health', 'Property', 'Vehicle', 'Entertainment', 'Other']
     },
     targetAmount: {
         type: Number,
@@ -27,7 +27,14 @@ const goalSchema = new mongoose.Schema({
     },
     color: {
         type: String,
-        enum: ['bg-blue-600', 'bg-rose-500', 'bg-emerald-500', 'bg-purple-600', 'bg-amber-500', 'bg-indigo-600'],
+        enum: [
+            'bg-blue-600',
+            'bg-rose-500',
+            'bg-emerald-500',
+            'bg-purple-600',
+            'bg-amber-500',
+            'bg-indigo-600'
+        ],
         default: 'bg-blue-600'
     },
     icon: {
@@ -54,17 +61,14 @@ const goalSchema = new mongoose.Schema({
     }
 });
 
-// Virtual untuk progress percentage
 goalSchema.virtual('progress').get(function () {
     return (this.currentAmount / this.targetAmount) * 100;
 });
 
-// Virtual untuk remaining amount
 goalSchema.virtual('remaining').get(function () {
     return this.targetAmount - this.currentAmount;
 });
 
-// Method untuk update status berdasarkan progress
 goalSchema.methods.updateStatus = function () {
     const progress = this.currentAmount / this.targetAmount * 100;
     if (progress >= 100) {

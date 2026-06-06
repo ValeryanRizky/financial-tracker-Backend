@@ -1,24 +1,55 @@
-class BalanceDTO {
-    static response(balance) {
+class ExpenseDTO {
+    static createRequest(data) {
         return {
-            id: balance._id,
-            amount: balance.amount,
-            userId: balance.userId,
-            createdAt: balance.createdAt,
-            updatedAt: balance.updatedAt
+            amount: data.amount,
+            paymentMethod: data.paymentMethod,
+            category: data.category,
+            description: data.description || '',
+            date: data.date ? new Date(data.date) : new Date(),
+            userId: data.userId,
+            walletId: data.walletId || null 
         };
     }
 
-    static summaryResponse(balance, goals = []) {
-        const totalSaved = goals.reduce((sum, goal) => sum + goal.currentAmount, 0);
-
+    static response(expense) {
         return {
-            balance: balance?.amount || 0,
-            totalSaved,
-            remainingBalance: (balance?.amount || 0) - totalSaved,
-            goalsCount: goals.length
+            id: expense._id,
+            amount: expense.amount,
+            paymentMethod: expense.paymentMethod,
+            category: expense.category,
+            description: expense.description,
+            date: expense.date,
+            walletId: expense.walletId || null, // <-- Pastikan null jika tidak ada
+            createdAt: expense.createdAt,
+            updatedAt: expense.updatedAt
         };
+    }
+
+    static listResponse(expenses, total = null, totalAmount = null) {
+        const response = {
+            success: true,
+            count: expenses.length,
+            data: expenses.map(expense => this.response(expense))
+        };
+
+        if (total !== null) response.total = total;
+        if (totalAmount !== null) response.totalAmount = totalAmount;
+
+        return response;
+    }
+
+    static updateRequest(data) {
+        const updateData = {};
+
+        if (data.amount !== undefined) updateData.amount = data.amount;
+        if (data.paymentMethod !== undefined) updateData.paymentMethod = data.paymentMethod;
+        if (data.category !== undefined) updateData.category = data.category;
+        if (data.description !== undefined) updateData.description = data.description;
+        if (data.date !== undefined) updateData.date = data.date;
+        if (data.walletId !== undefined) updateData.walletId = data.walletId;
+
+        return updateData;
     }
 }
 
-module.exports = BalanceDTO;
+module.exports = ExpenseDTO;

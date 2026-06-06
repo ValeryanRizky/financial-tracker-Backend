@@ -1,7 +1,4 @@
-/**
- * Interface untuk Repository
- * (Abstraction / Dependency Inversion)
- */
+
 class IRepository {
     async findById(id) {
         throw new Error('Method not implemented');

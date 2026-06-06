@@ -36,7 +36,7 @@ class IncomeRepository extends IRepository {
             return this.model.findByIdAndUpdate(
                 id,
                 data,
-                { new: true, runValidators: true }
+                { returnDocument: 'after', runValidators: true } 
             );
         } catch (error) {
             throw new Error(`Error updating income: ${error.message}`);
