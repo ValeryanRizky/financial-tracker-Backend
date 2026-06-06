@@ -65,14 +65,14 @@ class App {
         this.incomeService = new IncomeService(
             this.incomeRepository,
             this.balanceRepository,
-            this.walletRepository  
+            this.walletRepository
         );
 
         // 🔥 PERBAIKI: ExpenseService dengan walletRepository
         this.expenseService = new ExpenseService(
             this.expenseRepository,
             this.balanceRepository,
-            this.walletRepository  
+            this.walletRepository
         );
 
         this.goalService = new GoalService(
@@ -86,7 +86,7 @@ class App {
             this.goalRepository,
             this.incomeRepository,
             this.expenseRepository,
-            this.walletRepository 
+            this.walletRepository
         );
 
         this.walletService = new WalletService(
@@ -105,7 +105,12 @@ class App {
     }
 
     setupMiddleware() {
-        this.app.use(cors());
+        this.app.use(cors({
+            origin: '*', // Mengizinkan semua domain (termasuk localhost & link deployment frontend)
+            methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+            allowedHeaders: ['Content-Type', 'Authorization']
+        }));
+
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
     }
