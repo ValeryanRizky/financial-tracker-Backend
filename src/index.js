@@ -107,7 +107,7 @@ class App {
     setupMiddleware() {
         this.app.use(cors({
             origin: '*', // Mengizinkan semua domain (termasuk localhost & link deployment frontend)
-            methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+            methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
             allowedHeaders: ['Content-Type', 'Authorization']
         }));
 
